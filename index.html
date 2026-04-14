@@ -25975,13 +25975,65 @@ window.tasklet={storage:{get:window.__localGet,set:window.__localSet,delete:wind
     attacks: ["Reality tears open and something reaches through!", "An eye the size of a moon focuses on you!", "Tentacles from outside time lash at your existence!", "It speaks a syllable and your HP responds!", "Darkness condenses into a fist!"],
     drops: "Void Core \xB7 Titan Fragment \xB7 Cosmic Essence \xB7 Champion's Seal"
   };
+  var NPCS = [
+    {
+      id: "blacksmith",
+      name: "Elara",
+      title: "The Blacksmith",
+      icon: "\u{1F528}",
+      color: "#ff8844",
+      greeting: "I forge the finest blades in the land, but first prove you can use one. Slay 3 beasts and return to me.",
+      quest: { type: "kills", target: 3, desc: "Defeat 3 monsters" },
+      reward: { type: "weapon", item: { name: "Elara's Blade", atk: 35, desc: "Hand-forged with care" }, text: "My finest work. May it serve you well, hero." }
+    },
+    {
+      id: "healer",
+      name: "Brother Aldric",
+      title: "The Healer",
+      icon: "\u26EA",
+      color: "#44ff88",
+      greeting: "A dark illness has taken our village. Reach Level 5 and I shall share our sacred remedies with you.",
+      quest: { type: "level", target: 5, desc: "Reach Level 5" },
+      reward: { type: "gold_pots", gold: 200, pots: 3, text: "The gods favour the brave. Take these healing salves." }
+    },
+    {
+      id: "merchant",
+      name: "Mira",
+      title: "The Merchant",
+      icon: "\u{1F4BC}",
+      color: "#ffdd44",
+      greeting: "Gold is the language of trust. Earn 300g from combat and I shall show you something very special.",
+      quest: { type: "combat_gold", target: 300, desc: "Earn 300g from combat" },
+      reward: { type: "weapon", item: { name: "Shadow Dagger", atk: 80, desc: "Stolen from darkness" }, text: "I knew you were real. This blade was waiting for someone like you." }
+    },
+    {
+      id: "captain",
+      name: "Capt. Varen",
+      title: "Guard Captain",
+      icon: "\u{1F5E1}",
+      color: "#4488ff",
+      greeting: "You want to fight the darkness? Prove it. Defeat 5 beasts and I will arm you with proper plate armour.",
+      quest: { type: "kills", target: 5, desc: "Defeat 5 monsters" },
+      reward: { type: "armor", item: { name: "Varen's Plate", def: 50, desc: "Guard-issue heavy plate" }, text: "You have earned it. That armour has turned many a blade." }
+    },
+    {
+      id: "scholar",
+      name: "Aria",
+      title: "Arcane Scholar",
+      icon: "\u{1F4DA}",
+      color: "#cc66ff",
+      greeting: "Knowledge is the sharpest weapon of all. Invest in research and I shall reward your wisdom with something ancient.",
+      quest: { type: "research_count", target: 1, desc: "Research any skill" },
+      reward: { type: "stats", int: 3, desc: "Ancient Tome: +3 INT", text: "This tome has empowered wiser souls than I can count. May it sharpen your mind." }
+    }
+  ];
   var clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
   var getMaxHp = (p) => p.baseHp + p.level * 25 + p.vit * 6 + (p.bonusHp || 0);
   var getMaxMp = (p) => p.baseMp + p.level * 15 + p.int * 4 + (p.bonusMp || 0);
   var xpNeeded = (lvl) => Math.floor(100 * Math.pow(1.3, lvl - 1));
   function makePlayer(name, clsName) {
     const c = CLASSES[clsName];
-    return { name, className: clsName, level: 1, xp: 0, gold: 150, pots: 2, rp: 0, dmgMult: 1, baseHp: c.hp, hp: c.hp, baseMp: c.mp, mp: c.mp, str: c.str, int: c.int, vit: c.vit, crit: c.crit, goldMult: c.gMult, skills: [...c.skills], weaponAtk: 0, weaponName: "Fists", armorDef: 0, armorName: "Rags", research: [], trinkets: [], bonusHp: 0, bonusMp: 0, shielded: false };
+    return { name, className: clsName, level: 1, xp: 0, gold: 150, pots: 2, rp: 0, dmgMult: 1, baseHp: c.hp, hp: c.hp, baseMp: c.mp, mp: c.mp, str: c.str, int: c.int, vit: c.vit, crit: c.crit, goldMult: c.gMult, skills: [...c.skills], weaponAtk: 0, weaponName: "Fists", armorDef: 0, armorName: "Rags", research: [], trinkets: [], bonusHp: 0, bonusMp: 0, shielded: false, gameMode: "sandbox", combatGoldEarned: 0, quests: { blacksmith: { progress: 0, claimed: false }, healer: { progress: 0, claimed: false }, merchant: { progress: 0, claimed: false }, captain: { progress: 0, claimed: false }, scholar: { progress: 0, claimed: false } } };
   }
   function applyLevelUps(p, addLog, onLevelUp) {
     let np = { ...p };
@@ -27565,6 +27617,149 @@ window.tasklet={storage:{get:window.__localGet,set:window.__localSet,delete:wind
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Btn, { label: "\u2715 Leave Lab", onClick: onClose, color: C.dim })
     ] });
   }
+  function ModeSelectScreen({ onChoose }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", padding: "24px 16px", gap: 24 }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontFamily: C.font, fontSize: 22, color: C.amber, textShadow: `0 0 16px ${C.amber}`, letterSpacing: 4, textAlign: "center" }, children: "\u2694 CHOOSE YOUR PATH \u2694" }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontFamily: C.font, fontSize: 12, color: C.dim, textAlign: "center", marginTop: -12 }, children: "How do you want to play?" }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", gap: 20, flexWrap: "wrap", justifyContent: "center" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
+          "div",
+          {
+            onClick: () => onChoose("story"),
+            style: { border: `1px solid ${C.green}`, background: "#001a00", padding: 28, cursor: "pointer", maxWidth: 220, textAlign: "center", boxShadow: `0 0 20px ${C.green}44`, transition: "all 0.15s" },
+            children: [
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontSize: 52, marginBottom: 10 }, children: "\u{1F4D6}" }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontFamily: C.font, fontSize: 15, color: C.green, fontWeight: "bold", marginBottom: 10, letterSpacing: 3 }, children: "STORY MODE" }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontFamily: C.font, fontSize: 11, color: C.dim, lineHeight: 1.7 }, children: "Visit the village. Help its people. Complete quests to earn unique weapons and rewards. A richer adventure awaits." }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { marginTop: 14, fontFamily: C.font, fontSize: 10, color: C.green, border: `1px solid ${C.green}`, padding: "4px 10px", display: "inline-block" }, children: "\u25B6 RECOMMENDED" })
+            ]
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
+          "div",
+          {
+            onClick: () => onChoose("sandbox"),
+            style: { border: `1px solid ${C.amber}`, background: "#1a0e00", padding: 28, cursor: "pointer", maxWidth: 220, textAlign: "center", boxShadow: `0 0 20px ${C.amber}44`, transition: "all 0.15s" },
+            children: [
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontSize: 52, marginBottom: 10 }, children: "\u2694" }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontFamily: C.font, fontSize: 15, color: C.amber, fontWeight: "bold", marginBottom: 10, letterSpacing: 3 }, children: "SANDBOX" }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontFamily: C.font, fontSize: 11, color: C.dim, lineHeight: 1.7 }, children: "Classic freeplay. Hunt monsters, buy gear, research skills and take down the Void Titan. Jump straight in." }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { marginTop: 14, fontFamily: C.font, fontSize: 10, color: C.amber, border: `1px solid ${C.amber}`, padding: "4px 10px", display: "inline-block" }, children: "\u25B6 FREEPLAY" })
+            ]
+          }
+        )
+      ] })
+    ] });
+  }
+  function VillageScreen({ player, setPlayer, onClose, addLog }) {
+    const [dialog, setDialog] = (0, import_react.useState)(null);
+    const getProgress = (npc) => {
+      const q = player.quests?.[npc.id] || { progress: 0, claimed: false };
+      if (q.claimed) return { done: true, claimed: true, pct: 1, progress: 0, target: npc.quest.target };
+      let progress = 0;
+      if (npc.quest.type === "kills") progress = q.progress || 0;
+      if (npc.quest.type === "level") progress = Math.min(player.level, npc.quest.target);
+      if (npc.quest.type === "combat_gold") progress = Math.min(player.combatGoldEarned || 0, npc.quest.target);
+      if (npc.quest.type === "research_count") progress = player.research.length >= 1 ? 1 : 0;
+      const done = progress >= npc.quest.target;
+      const pct = Math.min(1, npc.quest.target > 0 ? progress / npc.quest.target : 0);
+      return { done, claimed: false, pct, progress, target: npc.quest.target };
+    };
+    const claimReward = (npc) => {
+      const r = npc.reward;
+      let np = { ...player, quests: { ...player.quests, [npc.id]: { ...player.quests?.[npc.id] || {}, claimed: true, progress: player.quests?.[npc.id]?.progress || 0 } } };
+      if (r.type === "weapon" || r.type === "unlock_weapon") {
+        if (r.item.atk > np.weaponAtk) {
+          np.weaponAtk = r.item.atk;
+          np.weaponName = r.item.name;
+          addLog(` \u{1F5E1} Equipped: ${r.item.name} (+${r.item.atk} ATK)`, npc.color);
+        } else {
+          np.gold += Math.floor(r.item.atk * 5);
+          addLog(` \u{1F4B0} Already have better \u2014 received ${Math.floor(r.item.atk * 5)}g instead`, npc.color);
+        }
+      }
+      if (r.type === "armor") {
+        if (r.item.def > np.armorDef) {
+          np.armorDef = r.item.def;
+          np.armorName = r.item.name;
+          addLog(` \u{1F6E1} Equipped: ${r.item.name} (+${r.item.def} DEF)`, npc.color);
+        } else {
+          np.gold += Math.floor(r.item.def * 10);
+          addLog(` \u{1F4B0} Already have better \u2014 received ${Math.floor(r.item.def * 10)}g instead`, npc.color);
+        }
+      }
+      if (r.type === "gold_pots") {
+        np.gold += r.gold;
+        np.pots += r.pots;
+        addLog(` \u{1F381} Received ${r.gold}g and ${r.pots} potions!`, npc.color);
+      }
+      if (r.type === "stats") {
+        np.int = (np.int || 0) + r.int;
+        addLog(` \u{1F4D6} ${r.desc}`, npc.color);
+      }
+      addLog(` \u{1F4AC} ${npc.name}: "${r.text}"`, npc.color);
+      setPlayer(np);
+      setDialog(null);
+    };
+    return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", flexDirection: "column", gap: 10, padding: "12px 8px", minHeight: "100vh" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontFamily: C.font, fontSize: 16, color: C.amber, flex: 1, letterSpacing: 2 }, children: "\u{1F3D8} THE VILLAGE" }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Btn, { small: true, label: "\u2190 Back to Hub", onClick: onClose, color: C.dim })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontFamily: C.font, fontSize: 11, color: C.dim, marginBottom: 4 }, children: "Help the villagers to earn unique rewards. Complete quests, then return to claim them." }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { display: "flex", flexWrap: "wrap", gap: 10 }, children: NPCS.map((npc) => {
+        const st = getProgress(npc);
+        return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
+          "div",
+          {
+            onClick: () => !st.claimed && setDialog(npc),
+            style: { border: `1px solid ${st.claimed ? "#336633" : st.done ? npc.color : C.dim}`, background: st.claimed ? "#001a00" : st.done ? `${npc.color}11` : "transparent", padding: "12px 16px", cursor: st.claimed ? "default" : "pointer", minWidth: 140, flex: 1, transition: "all 0.15s", boxShadow: st.done && !st.claimed ? `0 0 12px ${npc.color}44` : "none", maxWidth: 200 },
+            children: [
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontSize: 28, marginBottom: 4 }, children: npc.icon }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontFamily: C.font, fontSize: 12, color: npc.color, fontWeight: "bold" }, children: npc.name }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontFamily: C.font, fontSize: 10, color: C.dim, marginBottom: 8 }, children: npc.title }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { height: 4, background: "#111", borderRadius: 2, overflow: "hidden", marginBottom: 5 }, children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { height: "100%", width: `${st.pct * 100}%`, background: st.claimed ? "#336633" : npc.color, transition: "width 0.4s" } }) }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontFamily: C.font, fontSize: 10, color: st.claimed ? "#448844" : st.done ? C.green : C.amber }, children: st.claimed ? "\u2713 Quest complete" : st.done ? "\u2B50 Claim your reward!" : npc.quest.desc }),
+              !st.claimed && !st.done && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { fontFamily: C.font, fontSize: 10, color: C.dim, marginTop: 2 }, children: [
+                st.progress,
+                "/",
+                npc.quest.target
+              ] })
+            ]
+          },
+          npc.id
+        );
+      }) }),
+      dialog && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2e3 }, onClick: () => setDialog(null), children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { background: C.panel, border: `2px solid ${dialog.color}`, padding: 28, maxWidth: 420, width: "90vw", fontFamily: C.font, boxShadow: `0 0 30px ${dialog.color}55` }, onClick: (e) => e.stopPropagation(), children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontSize: 40, marginBottom: 8, textAlign: "center" }, children: dialog.icon }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontSize: 15, color: dialog.color, fontWeight: "bold", marginBottom: 2, textAlign: "center" }, children: dialog.name }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontSize: 11, color: C.dim, marginBottom: 16, textAlign: "center" }, children: dialog.title }),
+        (() => {
+          const st = getProgress(dialog);
+          return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontSize: 12, color: C.white, lineHeight: 1.8, marginBottom: 14, fontStyle: "italic", borderLeft: `3px solid ${dialog.color}`, paddingLeft: 10 }, children: st.claimed ? `"Thank you, hero. You have proven yourself worthy."` : dialog.greeting }),
+            !st.claimed && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { fontSize: 11, color: C.amber, marginBottom: 6 }, children: [
+                "Quest: ",
+                dialog.quest.desc
+              ] }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { height: 6, background: "#1a1a1a", borderRadius: 3, overflow: "hidden", marginBottom: 10 }, children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { height: "100%", width: `${st.pct * 100}%`, background: dialog.color, transition: "width 0.4s" } }) }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { fontSize: 11, color: C.dim, marginBottom: 14 }, children: [
+                "Progress: ",
+                st.progress,
+                " / ",
+                st.target
+              ] })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", gap: 8, justifyContent: "center" }, children: [
+              st.done && !st.claimed && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Btn, { label: "\u{1F381} Claim Reward", onClick: () => claimReward(dialog), color: dialog.color }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Btn, { small: true, label: "Close", onClick: () => setDialog(null), color: C.dim })
+            ] })
+          ] });
+        })()
+      ] }) })
+    ] });
+  }
   function App() {
     const [screen, setScreen] = (0, import_react.useState)("title");
     const [player, setPlayer] = (0, import_react.useState)(null);
@@ -27587,6 +27782,7 @@ window.tasklet={storage:{get:window.__localGet,set:window.__localSet,delete:wind
     const [bossPhase, setBossPhase] = (0, import_react.useState)(1);
     const bossPhaseRef = (0, import_react.useRef)(1);
     const synergyRef = (0, import_react.useRef)(null);
+    const [gameMode, setGameMode] = (0, import_react.useState)("sandbox");
     const [logFilter, setLogFilter] = (0, import_react.useState)("all");
     const submitFeedback = async () => {
       if (fbStars === 0) return;
@@ -27628,7 +27824,7 @@ ${fbText || "(no comment)"}
     }, [settings.musicVol, settings.musicOn]);
     (0, import_react.useEffect)(() => {
       const isBoss = enemy?.rarity === "BOSS";
-      const songMap = { title: "title", hub: "hub", market: "market", research: "research", combat: isBoss ? "boss" : "combat", settings: "hub", gameover: "gameover", win: "win" };
+      const songMap = { title: "title", hub: "hub", market: "market", research: "research", combat: isBoss ? "boss" : "combat", settings: "hub", gameover: "gameover", win: "win", modeselect: "title", village: "hub" };
       const song = songMap[screen];
       if (song) musicEngine.play(song);
       return () => {
@@ -27659,7 +27855,11 @@ ${fbText || "(no comment)"}
     }, []);
     const sep = (ch = "\u2500", c = C.dim) => addLog(ch.repeat(34), c);
     const loadGame = (sp) => {
-      setPlayer(sp);
+      const sp2 = { ...sp };
+      if (!sp2.quests) sp2.quests = { blacksmith: { progress: 0, claimed: false }, healer: { progress: 0, claimed: false }, merchant: { progress: 0, claimed: false }, captain: { progress: 0, claimed: false }, scholar: { progress: 0, claimed: false } };
+      if (sp2.combatGoldEarned === void 0) sp2.combatGoldEarned = 0;
+      if (sp2.gameMode) setGameMode(sp2.gameMode);
+      setPlayer(sp2);
       setLog([]);
       sep("\u2550", C.cyan);
       addLog(` \u{1F4C2} Loaded: ${sp.name} the ${sp.className}`, CLASSES[sp.className].color);
@@ -27675,7 +27875,7 @@ ${fbText || "(no comment)"}
       addLog(` Welcome, ${name} the ${clsName}!`, CLASSES[clsName].color);
       addLog(` Gold:150g \xB7 Pots:2 \xB7 RP:0`, C.amber);
       sep("\u2550", C.green);
-      setScreen("intro");
+      setScreen("modeselect");
     };
     const rest = () => {
       if (player.gold < settings.restCost) {
@@ -27752,6 +27952,14 @@ ${fbText || "(no comment)"}
       const xb = np.research.includes("Scholar") ? 1.1 : 1;
       const g = Math.floor(ee.gold * np.goldMult * settings.goldMult), x = Math.floor(ee.xp * xb * settings.xpMult);
       let p2 = { ...np, gold: np.gold + g, xp: np.xp + x };
+      if (ee.rarity !== "BOSS" && p2.quests) {
+        p2.combatGoldEarned = (p2.combatGoldEarned || 0) + g;
+        p2.quests = {
+          ...p2.quests,
+          blacksmith: { ...p2.quests.blacksmith, progress: (p2.quests.blacksmith?.progress || 0) + 1 },
+          captain: { ...p2.quests.captain, progress: (p2.quests.captain?.progress || 0) + 1 }
+        };
+      }
       sep("\u2550", C.green);
       addLog(` \u{1F3C6} Victory! +${x} XP +${g} Gold`, C.green);
       if (ee.drops) addLog(` \u{1F4B0} Drops: ${ee.drops}`, C.gold);
@@ -27880,6 +28088,11 @@ ${fbText || "(no comment)"}
             }
           ),
           screen === "title" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TitleScreen, { onStart: startGame, onLoad: loadGame }),
+          screen === "modeselect" && player && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModeSelectScreen, { onChoose: (mode) => {
+            setGameMode(mode);
+            setPlayer((prev) => ({ ...prev, gameMode: mode }));
+            setScreen("intro");
+          } }),
           screen === "intro" && player && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", padding: "24px 16px", gap: 20 }, children: [
             /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontFamily: C.font, fontSize: 22, color: C.green, textShadow: `0 0 16px ${C.green}`, letterSpacing: 4, textAlign: "center" }, children: "\u2694 THE QUEST BEGINS \u2694" }),
             /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { maxWidth: 480, display: "flex", flexDirection: "column", gap: 14 }, children: [
@@ -27917,6 +28130,7 @@ ${fbText || "(no comment)"}
                 ),
                 /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Btn, { label: `\u{1F4A4} Rest (${settings.restCost}g)`, onClick: rest, color: C.blue }),
                 /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Btn, { label: "\u{1F441} Boss", onClick: () => beginCombat(true), color: C.red }),
+                gameMode === "story" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Btn, { label: "\u{1F3D8} Village", onClick: () => setScreen("village"), color: C.amber }),
                 /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Btn, { label: "\u{1F4BE} Save", onClick: () => setSaveModal("save"), color: C.cyan }),
                 /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Btn, { label: "\u{1F4C2} Load", onClick: () => setSaveModal("load"), color: C.cyan }),
                 /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Btn, { label: "\u2699 Settings", onClick: () => setScreen("settings"), color: C.cyan }),
@@ -27946,6 +28160,7 @@ ${fbText || "(no comment)"}
                   addLog
                 }
               ),
+              screen === "village" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(VillageScreen, { player, setPlayer, onClose: () => setScreen("hub"), addLog }),
               /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box, { title: "LOG", color: C.dim, style: { flex: 1 }, children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Log, { lines: log }) })
             ] })
           ] }),
